@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Internet permission required for API calls and URL launching -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    
     <application
-        android:label="astrolens"
+        android:label="Astro Lens"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
