@@ -11,6 +11,8 @@ import json
 import google.generativeai as genai
 from dotenv import load_dotenv
 from difflib import SequenceMatcher
+import hashlib
+from datetime import datetime, timedelta
 
 load_dotenv()
 
@@ -32,6 +34,119 @@ def initialize_ai():
 
 # Initialize AI model on startup
 ai_model = initialize_ai()
+
+# In-memory cache for storing summarization results
+class SummarizationCache:
+    def __init__(self, ttl_hours: int = 24):
+        """
+        Initialize cache with TTL (Time To Live) in hours.
+        
+        Args:
+            ttl_hours: How long to keep cached entries (default: 24 hours)
+        """
+        self.cache: Dict[str, Dict] = {}
+        self.ttl_hours = ttl_hours
+    
+    def _generate_cache_key(self, url: str) -> str:
+        """Generate a unique cache key for a URL."""
+        # Normalize URL by removing common variations
+        normalized_url = url.lower().strip()
+        # Remove trailing slashes and common URL parameters that don't affect content
+        normalized_url = re.sub(r'[/?#&]$', '', normalized_url)
+        normalized_url = re.sub(r'[?&]utm_[^&]*', '', normalized_url)  # Remove UTM parameters
+        
+        # Create hash of the normalized URL for consistent key generation
+        return hashlib.md5(normalized_url.encode('utf-8')).hexdigest()
+    
+    def _is_expired(self, timestamp: datetime) -> bool:
+        """Check if a cache entry has expired."""
+        expiry_time = timestamp + timedelta(hours=self.ttl_hours)
+        return datetime.now() > expiry_time
+    
+    def get(self, url: str) -> Dict[str, Any] | None:
+        """
+        Retrieve cached response for a URL.
+        
+        Args:
+            url: The URL to look up
+            
+        Returns:
+            Cached response data or None if not found/expired
+        """
+        cache_key = self._generate_cache_key(url)
+        
+        if cache_key not in self.cache:
+            print(f"DEBUG: Cache miss for URL: {url}")
+            return None
+        
+        entry = self.cache[cache_key]
+        
+        # Check if entry has expired
+        if self._is_expired(entry['timestamp']):
+            print(f"DEBUG: Cache entry expired for URL: {url}")
+            del self.cache[cache_key]
+            return None
+        
+        print(f"DEBUG: Cache hit for URL: {url}")
+        return entry['data']
+    
+    def set(self, url: str, data: Dict[str, Any]) -> None:
+        """
+        Store response data in cache.
+        
+        Args:
+            url: The URL to cache
+            data: The response data to store
+        """
+        cache_key = self._generate_cache_key(url)
+        
+        self.cache[cache_key] = {
+            'data': data,
+            'timestamp': datetime.now(),
+            'url': url  # Store original URL for debugging
+        }
+        
+        print(f"DEBUG: Cached response for URL: {url}")
+    
+    def clear_expired(self) -> int:
+        """
+        Remove all expired entries from cache.
+        
+        Returns:
+            Number of entries removed
+        """
+        expired_keys = []
+        
+        for key, entry in self.cache.items():
+            if self._is_expired(entry['timestamp']):
+                expired_keys.append(key)
+        
+        for key in expired_keys:
+            del self.cache[key]
+        
+        if expired_keys:
+            print(f"DEBUG: Cleared {len(expired_keys)} expired cache entries")
+        
+        return len(expired_keys)
+    
+    def get_cache_stats(self) -> Dict[str, Any]:
+        """Get cache statistics."""
+        total_entries = len(self.cache)
+        expired_count = 0
+        
+        for entry in self.cache.values():
+            if self._is_expired(entry['timestamp']):
+                expired_count += 1
+        
+        return {
+            'total_entries': total_entries,
+            'expired_entries': expired_count,
+            'active_entries': total_entries - expired_count,
+            'ttl_hours': self.ttl_hours
+        }
+
+# Initialize global cache instance
+summarization_cache = SummarizationCache(ttl_hours=24)
 
 app = FastAPI(
     title="Paper Summarizer API",
@@ -557,15 +672,22 @@ async def root():
         "version": "1.0.0",
         "endpoints": {
             "/summarize": "POST - Summarize a research paper from URL",
-            "/summarize-get": "GET - Summarize a research paper from URL (browser-friendly)",
-            "/chat": "GET - Chat endpoint that finds relevant papers based on user query"
+            "/summarize-get": "GET - Summarize a research paper from URL (browser-friendly, with caching)",
+            "/chat": "GET - Chat endpoint that finds relevant papers based on user query",
+            "/cache/stats": "GET - Get cache statistics",
+            "/cache/clear": "POST - Clear expired cache entries"
+        },
+        "cache_info": {
+            "enabled": True,
+            "ttl_hours": summarization_cache.ttl_hours,
+            "description": "Responses are cached for 24 hours to improve performance"
         }
     }
 
 @app.get("/summarize-get")
 async def summarize_paper_get(url: str):
     """
-    Browser-friendly GET endpoint for summarizing papers.
+    Browser-friendly GET endpoint for summarizing papers with caching.
     
     Usage: http://localhost:8000/summarize-get?url=https://example.com/paper
     """
@@ -577,9 +699,26 @@ async def summarize_paper_get(url: str):
         except ValidationError:
             raise HTTPException(status_code=422, detail="Invalid URL format")
         
+        # Check cache first
+        cached_response = summarization_cache.get(str(validated_url))
+        if cached_response:
+            print(f"DEBUG: Returning cached response for URL: {url}")
+            return cached_response
+        
+        # Cache miss - process the request
+        print(f"DEBUG: Cache miss - processing URL: {url}")
+        
         # Create request object and use the existing logic
         request = SummarizeRequest(url=validated_url)
-        return await summarize_paper(request)
+        response_data = await summarize_paper(request)
+        
+        # Convert Pydantic model to dict for caching
+        response_dict = response_data.dict() if hasattr(response_data, 'dict') else response_data
+        
+        # Store in cache
+        summarization_cache.set(str(validated_url), response_dict)
+        
+        return response_data
         
     except HTTPException:
         raise
@@ -757,6 +896,50 @@ async def chat_endpoint(message: str):
     except Exception as e:
         print(f"Error in chat endpoint: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.get("/cache/stats")
+async def get_cache_stats():
+    """
+    Get cache statistics.
+    
+    Returns:
+        JSON response with cache statistics including total entries, 
+        expired entries, active entries, and TTL configuration
+    """
+    try:
+        # Clean up expired entries first
+        summarization_cache.clear_expired()
+        
+        # Get current stats
+        stats = summarization_cache.get_cache_stats()
+        
+        return {
+            "cache_stats": stats,
+            "message": f"Cache contains {stats['active_entries']} active entries out of {stats['total_entries']} total entries"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving cache stats: {str(e)}")
+
+@app.post("/cache/clear")
+async def clear_expired_cache():
+    """
+    Manually clear expired cache entries.
+    
+    Returns:
+        JSON response with number of entries cleared
+    """
+    try:
+        cleared_count = summarization_cache.clear_expired()
+        
+        return {
+            "message": f"Successfully cleared {cleared_count} expired cache entries",
+            "entries_cleared": cleared_count,
+            "cache_stats": summarization_cache.get_cache_stats()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error clearing cache: {str(e)}")
 
 @app.get("/health")
 async def health_check():
