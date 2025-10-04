@@ -129,9 +129,17 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<void> _launchUrl(String url) async {
     final Uri uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched == false) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not launch $url')));
+      }
+    } catch (e) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Could not launch $url')));
@@ -286,25 +294,6 @@ class _ChatPageState extends State<ChatPage> {
       appBar: AppBar(
         title: const Text('Research Assistant'),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        actions: [
-          // Open Source GitHub Link
-          TextButton.icon(
-            onPressed: () =>
-                _launchUrl('https://github.com/MAyman007/AstroLens'),
-            icon: const Icon(
-              Icons.code,
-              color: Color(0xFF00BFA5), // Emerald Teal
-              size: 18,
-            ),
-            label: const Text(
-              'View Source on GitHub',
-              style: TextStyle(
-                color: Color(0xFF00BFA5), // Emerald Teal
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [

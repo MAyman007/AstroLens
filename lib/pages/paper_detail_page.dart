@@ -58,10 +58,22 @@ class _PaperDetailPageState extends State<PaperDetailPage> {
 
   Future<void> _launchUrl() async {
     final Uri url = Uri.parse(widget.paper.link);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      throw Exception('Could not launch ${widget.paper.link}');
+    try {
+      final launched = await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched == false && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open ${widget.paper.link}')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open ${widget.paper.link}')),
+        );
+      }
     }
   }
 
@@ -195,15 +207,20 @@ class _PaperDetailPageState extends State<PaperDetailPage> {
 
   Future<void> _launchGitHub() async {
     final Uri url = Uri.parse('https://github.com/MAyman007/AstroLens');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
+    try {
+      final launched = await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched == false && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open GitHub repository')),
+        );
+      }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not open GitHub repository'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Could not open GitHub repository')),
         );
       }
     }
@@ -212,27 +229,7 @@ class _PaperDetailPageState extends State<PaperDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Paper Details'),
-        actions: [
-          // Open Source GitHub Link
-          TextButton.icon(
-            onPressed: _launchGitHub,
-            icon: const Icon(
-              Icons.code,
-              color: Color(0xFF00BFA5), // Emerald Teal
-              size: 18,
-            ),
-            label: const Text(
-              'View Source on GitHub',
-              style: TextStyle(
-                color: Color(0xFF00BFA5), // Emerald Teal
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Paper Details')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -326,6 +323,23 @@ class _PaperDetailPageState extends State<PaperDetailPage> {
                   foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+              ),
+            ),
+            // Footer with View Source link
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Center(
+                child: TextButton.icon(
+                  onPressed: _launchGitHub,
+                  icon: const Icon(Icons.code, color: Color(0xFF00BFA5)),
+                  label: const Text(
+                    'View Source on GitHub',
+                    style: TextStyle(
+                      color: Color(0xFF00BFA5),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

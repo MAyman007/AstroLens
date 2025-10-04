@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/research_paper.dart';
@@ -70,16 +71,44 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _launchGitHub() async {
     final Uri url = Uri.parse('https://github.com/MAyman007/AstroLens');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
+    try {
+      final launched = await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched == false && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open GitHub repository')),
+        );
+      }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not open GitHub repository'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Could not open GitHub repository')),
         );
+      }
+    }
+  }
+
+  Future<void> _launchReleases() async {
+    final Uri url = Uri.parse(
+      'https://github.com/MAyman007/AstroLens/releases',
+    );
+    try {
+      final launched = await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched == false && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not open releases page')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not open releases page')));
       }
     }
   }
@@ -130,30 +159,30 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         actions: [
-          // Open Source GitHub Link
-          TextButton.icon(
-            onPressed: _launchGitHub,
-            icon: const Icon(
-              Icons.code,
-              color: Color(0xFF00BFA5), // Emerald Teal
-              size: 18,
-            ),
-            label: const Text(
-              'View Source on GitHub',
-              style: TextStyle(
-                color: Color(0xFF00BFA5), // Emerald Teal
-                fontWeight: FontWeight.w600,
+          if (kIsWeb)
+            TextButton.icon(
+              onPressed: _launchReleases,
+              icon: const Icon(
+                Icons.download,
+                color: Color(0xFF00BFA5),
+                size: 18,
+              ),
+              label: const Text(
+                'Download App',
+                style: TextStyle(
+                  color: Color(0xFF00BFA5),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
           // Additional futuristic element
-          // Container(
-          //   margin: const EdgeInsets.only(right: 16.0),
-          //   child: const Icon(
-          //     Icons.science,
-          //     color: Color(0xFF7C4DFF), // Electric Purple
-          //   ),
-          // ),
+          Container(
+            margin: const EdgeInsets.only(right: 16.0),
+            child: const Icon(
+              Icons.science,
+              color: Color(0xFF7C4DFF), // Electric Purple
+            ),
+          ),
         ],
       ),
       body: Column(
@@ -223,6 +252,23 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 8),
           // Content Area
           Expanded(child: _buildContent()),
+          // Footer with View Source link
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Center(
+              child: TextButton.icon(
+                onPressed: _launchGitHub,
+                icon: const Icon(Icons.code, color: Color(0xFF00BFA5)),
+                label: const Text(
+                  'View Source on GitHub',
+                  style: TextStyle(
+                    color: Color(0xFF00BFA5),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
