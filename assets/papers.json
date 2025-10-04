@@ -2,35 +2,35 @@
   {
     "id": 1,
     "title": "Mice in Bion-M 1 space mission: training and selection",
-    "link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4136787/",
+    "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4136787/",
     "summary": "Mice were carefully trained and selected for the Bion-M 1 space mission to test how mammals adapt to the stress of spaceflight.",
     "keywords": ["mice", "space mission", "training", "adaptation"]
   },
   {
     "id": 2,
     "title": "Microgravity induces pelvic bone loss through osteoclastic activity, osteocytic osteolysis, and osteoblastic cell cycle inhibition by CDKN1a/p21",
-    "link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3630201/",
+    "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3630201/",
     "summary": "Bone loss in microgravity happens because bone cells break down faster and their growth cycle is slowed by a key protein (CDKN1a/p21).",
     "keywords": ["microgravity", "bone loss", "osteoclasts", "cell cycle"]
   },
   {
     "id": 3,
     "title": "Stem Cell Health and Tissue Regeneration in Microgravity",
-    "link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11988870/",
+    "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11988870/",
     "summary": "Stem cells exposed to microgravity show reduced ability to repair and regenerate tissues, raising concerns for long-term astronaut health.",
     "keywords": ["stem cells", "tissue regeneration", "microgravity", "health"]
   },
   {
     "id": 4,
     "title": "Microgravity Reduces the Differentiation and Regenerative Potential of Embryonic Stem Cells",
-    "link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7998608/",
+    "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7998608/",
     "summary": "Embryonic stem cells in microgravity fail to properly mature into specialized cells, limiting their ability to regenerate tissues.",
     "keywords": ["stem cells", "embryonic", "differentiation", "regeneration"]
   },
   {
     "id": 5,
     "title": "Microgravity validation of a novel system for RNA isolation and multiplex quantitative real time PCR analysis of gene expression on the International Space Station",
-    "link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5587110/",
+    "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5587110/",
     "summary": "A new system was successfully tested on the ISS to isolate RNA and analyze multiple genes at once, improving biological experiments in space.",
     "keywords": ["RNA", "PCR", "gene expression", "ISS", "microgravity"]
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/research_paper.dart';
 import '../services/paper_service.dart';
 import 'paper_detail_page.dart';
@@ -76,8 +77,55 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Astro Rush'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Row(
+          children: [
+            // Futuristic logo icon
+            Container(
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF9C27B0), Color(0xFF2196F3)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: const Icon(
+                Icons.rocket_launch,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Astro Rush text with readable styling
+            Text(
+              'ASTRO',
+              style: GoogleFonts.orbitron(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF9C27B0), // Purple
+              ),
+            ),
+            Text(
+              'RUSH',
+              style: GoogleFonts.orbitron(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF009688), // Teal
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          // Additional futuristic element
+          Container(
+            margin: const EdgeInsets.only(right: 16.0),
+            child: const Icon(
+              Icons.science,
+              color: Color(0xFF2196F3), // Blue
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -87,21 +135,40 @@ class _HomePageState extends State<HomePage> {
             child: TextField(
               controller: searchController,
               onChanged: _onSearchChanged,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Search papers...',
-                prefixIcon: const Icon(Icons.search),
+                hintStyle: const TextStyle(color: Colors.white54),
+                prefixIcon: const Icon(Icons.search, color: Color(0xFF9C27B0)),
                 suffixIcon: searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear),
+                        icon: const Icon(Icons.clear, color: Color(0xFF009688)),
                         onPressed: () {
                           searchController.clear();
                           _onSearchChanged('');
                         },
                       )
                     : null,
-                border: const OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                  borderSide: const BorderSide(color: Color(0xFF2196F3)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF2196F3),
+                    width: 1.5,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF9C27B0),
+                    width: 2.0,
+                  ),
+                ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: const Color(0xFF1E1E1E),
               ),
             ),
           ),

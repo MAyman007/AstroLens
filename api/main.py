@@ -341,6 +341,9 @@ async def summarize_paper(request: SummarizeRequest):
         # Try multiple strategies for PMC access
         url_str = str(request.url)
         
+        # Initialize response variable
+        response = None
+        
         # PMC E-utilities API strategy
         if 'pmc.ncbi.nlm.nih.gov' in url_str:
             print("DEBUG: Detected PMC URL, using NCBI E-utilities API...")
@@ -368,16 +371,16 @@ async def summarize_paper(request: SummarizeRequest):
                         }
                         
                         async with httpx.AsyncClient(timeout=60.0) as client:
-                            response = await client.get(eutils_url, headers=headers)
+                            pmc_response = await client.get(eutils_url, headers=headers)
                             
-                            print(f"DEBUG: E-utilities response status: {response.status_code}")
-                            print(f"DEBUG: E-utilities content length: {len(response.content)} bytes")
-                            print(f"DEBUG: E-utilities content preview: {response.text[:500]}")
+                            print(f"DEBUG: E-utilities response status: {pmc_response.status_code}")
+                            print(f"DEBUG: E-utilities content length: {len(pmc_response.content)} bytes")
+                            print(f"DEBUG: E-utilities content preview: {pmc_response.text[:500]}")
                             
-                            if response.status_code == 200 and len(response.content) > 100:
+                            if pmc_response.status_code == 200 and len(pmc_response.content) > 100:
                                 print("DEBUG: SUCCESS! Got PMC content via E-utilities API")
                                 # Parse XML content instead of HTML
-                                return await parse_pmc_xml_content(response.content, str(request.url))
+                                return await parse_pmc_xml_content(pmc_response.content, str(request.url))
                             else:
                                 print("DEBUG: E-utilities failed, falling back to generic approach")
                                 
@@ -387,12 +390,9 @@ async def summarize_paper(request: SummarizeRequest):
                     print("DEBUG: No NCBI_API_KEY found in environment, skipping E-utilities")
             else:
                 print("DEBUG: Could not extract PMC ID from URL")
-            
-            # Fall back to generic approach if E-utilities failed
-            response = None
         
         # Generic approach for non-PMC URLs or if PMC strategies failed
-        if not response:
+        if response is None:
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
