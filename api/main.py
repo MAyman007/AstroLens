@@ -1,14 +1,16 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
-from typing import List
+from typing import List, Dict, Any
 import uvicorn
 import httpx
 from bs4 import BeautifulSoup
 import re
 import os
+import json
 import google.generativeai as genai
 from dotenv import load_dotenv
+from difflib import SequenceMatcher
 
 load_dotenv()
 
@@ -554,7 +556,8 @@ async def root():
         "version": "1.0.0",
         "endpoints": {
             "/summarize": "POST - Summarize a research paper from URL",
-            "/summarize-get": "GET - Summarize a research paper from URL (browser-friendly)"
+            "/summarize-get": "GET - Summarize a research paper from URL (browser-friendly)",
+            "/chat": "GET - Chat endpoint that finds relevant papers based on user query"
         }
     }
 
@@ -591,6 +594,168 @@ async def favicon():
 async def summarize_options():
     """Handle preflight OPTIONS request for CORS."""
     return {}
+
+def load_papers() -> List[Dict[str, Any]]:
+    """Load papers from local JSON file."""
+    try:
+        papers_path = os.path.join(os.path.dirname(__file__), "../assets/papers.json")
+        with open(papers_path, 'r', encoding='utf-8') as file:
+            papers = json.load(file)
+        return papers
+    except FileNotFoundError:
+        print("Warning: papers.json file not found")
+        return []
+    except json.JSONDecodeError as e:
+        print(f"Error parsing papers.json: {e}")
+        return []
+    except Exception as e:
+        print(f"Error loading papers: {e}")
+        return []
+
+def calculate_similarity(text1: str, text2: str) -> float:
+    """Calculate similarity between two strings using SequenceMatcher."""
+    return SequenceMatcher(None, text1.lower(), text2.lower()).ratio()
+
+def find_most_relevant_paper(query: str, papers: List[Dict[str, Any]]) -> tuple[Dict[str, Any], float]:
+    """Find the most relevant paper based on comprehensive string similarity matching."""
+    if not papers:
+        return None, 0.0
+    
+    query_lower = query.lower().strip()
+    best_paper = None
+    best_score = 0.0
+    
+    for paper in papers:
+        # Get paper content
+        title = paper.get('title', '').lower()
+        summary = paper.get('summary', '').lower()
+        keywords = [kw.lower() for kw in paper.get('keywords', [])]
+        
+        # Combine all text content for comprehensive matching
+        combined_text = f"{title} {summary} {' '.join(keywords)}"
+        
+        # Calculate primary similarity using SequenceMatcher
+        primary_score = SequenceMatcher(None, query_lower, combined_text).ratio()
+        
+        # Calculate individual field similarities
+        title_similarity = SequenceMatcher(None, query_lower, title).ratio()
+        summary_similarity = SequenceMatcher(None, query_lower, summary).ratio()
+        
+        # Calculate keyword similarities
+        keyword_similarities = [
+            SequenceMatcher(None, query_lower, keyword).ratio() 
+            for keyword in keywords
+        ]
+        max_keyword_similarity = max(keyword_similarities) if keyword_similarities else 0.0
+        
+        # Calculate word-level matches for bonus scoring
+        query_words = set(query_lower.split())
+        paper_words = set(combined_text.split())
+        word_overlap = len(query_words.intersection(paper_words)) / len(query_words) if query_words else 0.0
+        
+        # Weighted final score combining different similarity measures
+        final_score = (
+            primary_score * 0.4 +           # Overall similarity: 40%
+            title_similarity * 0.25 +       # Title similarity: 25%
+            summary_similarity * 0.2 +      # Summary similarity: 20%
+            max_keyword_similarity * 0.1 +  # Best keyword match: 10%
+            word_overlap * 0.05            # Word overlap bonus: 5%
+        )
+        
+        if final_score > best_score:
+            best_score = final_score
+            best_paper = paper
+    
+    return best_paper, best_score
+
+async def generate_conversational_response(user_query: str, paper_summary: str, paper_title: str) -> str:
+    """Generate conversational AI response based on user query and paper content."""
+    if not ai_model:
+        return f"Based on your question about '{user_query}', I found this relevant research: {paper_summary}"
+    
+    try:
+        prompt = f"""
+        User asked: "{user_query}"
+        
+        Based on this research paper: "{paper_title}"
+        Summary: {paper_summary}
+        
+        Please provide a conversational response that:
+        1. Directly addresses the user's question
+        2. Uses the paper's findings to answer their query
+        3. Explains the research in simple, conversational language
+        4. Is engaging and helpful
+        5. Keeps the response under 200 words
+        
+        Answer in simple conversational language as if you're having a friendly chat about science.
+        """
+        
+        # Generate content using AI
+        response = ai_model.generate_content(prompt)
+        
+        if response and hasattr(response, 'text') and response.text:
+            return response.text.strip()
+        else:
+            # Fallback response
+            return f"Based on your question about '{user_query}', I found this relevant research: {paper_summary}"
+            
+    except Exception as e:
+        print(f"Error generating conversational response: {e}")
+        # Fallback response
+        return f"Based on your question about '{user_query}', I found this relevant research: {paper_summary}"
+
+@app.get("/chat")
+async def chat_endpoint(message: str):
+    """
+    Chat endpoint that finds the most relevant paper and generates AI-powered conversational responses.
+    
+    Args:
+        message: User query string
+        
+    Returns:
+        JSON response with AI-generated conversational response and link to most relevant paper
+    """
+    try:
+        if not message or not message.strip():
+            raise HTTPException(status_code=422, detail="Message parameter is required and cannot be empty")
+        
+        # Load papers from JSON file
+        papers = load_papers()
+        
+        if not papers:
+            return {
+                "response": "I'm sorry, but I couldn't load the research papers database. Please try again later.",
+                "link": None
+            }
+        
+        # Find the most relevant paper using enhanced similarity matching
+        relevant_paper, similarity_score = find_most_relevant_paper(message, papers)
+        
+        # Check if we found a good match (minimum threshold)
+        if not relevant_paper or similarity_score < 0.1:
+            return {
+                "response": "Hmm, I couldn't find any papers that closely match your query. Could you try asking about topics like bone loss in space, stem cell research in microgravity, or how space affects mice? I have research papers on these space biology topics!",
+                "link": None
+            }
+        
+        # Extract paper details
+        paper_title = relevant_paper.get('title', 'Unknown Title')
+        paper_summary = relevant_paper.get('summary', 'No summary available')
+        paper_link = relevant_paper.get('link', '')
+        
+        # Generate AI-powered conversational response
+        ai_response = await generate_conversational_response(message, paper_summary, paper_title)
+        
+        return {
+            "response": ai_response,
+            "link": paper_link
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in chat endpoint: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @app.get("/health")
 async def health_check():
