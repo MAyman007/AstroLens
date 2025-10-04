@@ -7252,7 +7252,7 @@ aDz(a2){var s=0,r=A.T(t.n6),q,p=2,o=[],n=[],m,l,k,j,i,h,g,f,e,d,c,b,a,a0,a1
 var $async$a5q=A.P(function(a3,a4){if(a3===1){o.push(a4)
 s=p}while(true)switch(s){case 0:p=4
 h=t.N
-m=A.fg("https://api.astrolens.earth/summarize-get",0,null).TU(A.al(["url",a2],h,t.z))
+m=A.fg("https://astrolens.mohamedayman.org/summarize-get",0,null).TU(A.al(["url",a2],h,t.z))
 A.px("DEBUG: Calling API with URL: "+A.l(m))
 A.aLt()
 g=A.c([],t.O)
