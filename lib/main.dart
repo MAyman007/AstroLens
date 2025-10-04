@@ -17,16 +17,19 @@ class AstroLensApp extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.dark,
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF9C27B0), // Purple
-          secondary: Color(0xFF2196F3), // Blue
-          tertiary: Color(0xFF009688), // Teal
-          surface: Color(0xFF121212), // Dark background
-          background: Color(0xFF0A0A0A), // Darker background
-          onPrimary: Colors.white,
+          primary: Color(0xFF00D4FF), // Cosmic Blue
+          secondary: Color(0xFF7C4DFF), // Electric Purple
+          tertiary: Color(0xFF00BFA5), // Emerald Teal
+          surface: Color(0xFF1A1D29), // Deep Space Blue
+          background: Color(0xFF0F1419), // Midnight Black
+          onPrimary: Color(0xFF001A20),
           onSecondary: Colors.white,
-          onTertiary: Colors.white,
-          onSurface: Colors.white70,
-          onBackground: Colors.white70,
+          onTertiary: Color(0xFF002020),
+          onSurface: Color(0xFFE1E3E8),
+          onBackground: Color(0xFFBFC2C7),
+          surfaceVariant: Color(0xFF242938),
+          onSurfaceVariant: Color(0xFFBFC2C7),
+          outline: Color(0xFF3D4354),
         ),
         textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme)
             .copyWith(
@@ -52,22 +55,35 @@ class AstroLensApp extends StatelessWidget {
               ),
             ),
         appBarTheme: AppBarTheme(
-          backgroundColor: const Color(0xFF1A1A1A),
-          foregroundColor: Colors.white,
+          backgroundColor: const Color(0xFF1A1D29),
+          foregroundColor: const Color(0xFFE1E3E8),
           titleTextStyle: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: const Color(0xFFE1E3E8),
           ),
           elevation: 0,
+          surfaceTintColor: Colors.transparent,
         ),
-        cardTheme: const CardThemeData(color: Color(0xFF1E1E1E), elevation: 8),
+        cardTheme: const CardThemeData(
+          color: Color(0xFF242938),
+          elevation: 8,
+          surfaceTintColor: Colors.transparent,
+        ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF9C27B0), // Purple
-            foregroundColor: Colors.white,
+            backgroundColor: const Color(0xFF00D4FF),
+            foregroundColor: const Color(0xFF001A20),
             textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
+            elevation: 4,
+            shadowColor: const Color(0xFF00D4FF).withOpacity(0.3),
           ),
+        ),
+        chipTheme: ChipThemeData(
+          backgroundColor: const Color(0xFF7C4DFF).withOpacity(0.15),
+          labelStyle: const TextStyle(color: Color(0xFFE1E3E8)),
+          side: BorderSide(color: const Color(0xFF7C4DFF).withOpacity(0.3)),
+          selectedColor: const Color(0xFF7C4DFF).withOpacity(0.3),
         ),
         useMaterial3: true,
       ),

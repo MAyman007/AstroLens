@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/research_paper.dart';
 import '../services/paper_service.dart';
 import 'paper_detail_page.dart';
+import 'chat_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -77,7 +78,7 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF9C27B0), Color(0xFF2196F3)],
+                  colors: [Color(0xFF00D4FF), Color(0xFF7C4DFF)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -96,16 +97,16 @@ class _HomePageState extends State<HomePage> {
               style: GoogleFonts.orbitron(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF9C27B0), // Purple
+                color: const Color(0xFF00D4FF), // Cosmic Blue
                 letterSpacing: 1.5,
               ),
             ),
             Text(
-              'RUSH',
+              'LENS',
               style: GoogleFonts.orbitron(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF009688), // Teal
+                color: const Color(0xFF00BFA5), // Emerald Teal
                 letterSpacing: 1.5,
               ),
             ),
@@ -117,7 +118,7 @@ class _HomePageState extends State<HomePage> {
             margin: const EdgeInsets.only(right: 16.0),
             child: const Icon(
               Icons.science,
-              color: Color(0xFF2196F3), // Blue
+              color: Color(0xFF7C4DFF), // Electric Purple
             ),
           ),
         ],
@@ -134,10 +135,10 @@ class _HomePageState extends State<HomePage> {
               decoration: InputDecoration(
                 hintText: 'Search papers...',
                 hintStyle: const TextStyle(color: Colors.white54),
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF9C27B0)),
+                prefixIcon: const Icon(Icons.search, color: Color(0xFF00D4FF)),
                 suffixIcon: searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear, color: Color(0xFF009688)),
+                        icon: const Icon(Icons.clear, color: Color(0xFF00BFA5)),
                         onPressed: () {
                           searchController.clear();
                           _onSearchChanged('');
@@ -146,24 +147,24 @@ class _HomePageState extends State<HomePage> {
                     : null,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.0),
-                  borderSide: const BorderSide(color: Color(0xFF2196F3)),
+                  borderSide: const BorderSide(color: Color(0xFF3D4354)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.0),
                   borderSide: const BorderSide(
-                    color: Color(0xFF2196F3),
+                    color: Color(0xFF3D4354),
                     width: 1.5,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.0),
                   borderSide: const BorderSide(
-                    color: Color(0xFF9C27B0),
+                    color: Color(0xFF00D4FF),
                     width: 2.0,
                   ),
                 ),
                 filled: true,
-                fillColor: const Color(0xFF1E1E1E),
+                fillColor: const Color(0xFF242938),
               ),
             ),
           ),
@@ -190,6 +191,18 @@ class _HomePageState extends State<HomePage> {
           // Content Area
           Expanded(child: _buildContent()),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => const ChatPage()));
+        },
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.chat_bubble_outline),
+        label: const Text('Ask Assistant'),
+        elevation: 8,
       ),
     );
   }
@@ -278,8 +291,12 @@ class _HomePageState extends State<HomePage> {
                             keyword,
                             style: const TextStyle(fontSize: 12),
                           ),
-                          backgroundColor: Colors.blue.withOpacity(0.1),
-                          side: BorderSide.none,
+                          backgroundColor: const Color(
+                            0xFF7C4DFF,
+                          ).withOpacity(0.15),
+                          side: BorderSide(
+                            color: const Color(0xFF7C4DFF).withOpacity(0.3),
+                          ),
                         ),
                       )
                       .toList(),
