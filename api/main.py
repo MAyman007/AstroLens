@@ -180,7 +180,7 @@ async def generate_simplified_summary(abstract, introduction, materials_methods,
     
     try:
         # Combine all sections
-        combined_text = f"Abstract: {abstract}\n\nMaterials and Methods: {materials_methods}\n\nResults: {results}"
+        combined_text = f"Abstract: {abstract}"
         # combined_text = f"Abstract: {abstract}\n\nIntroduction: {introduction}\n\nMaterials and Methods: {materials_methods}\n\nResults: {results}\n\nDiscussion: {discussion}"
         
         # Truncate if too long
@@ -200,7 +200,7 @@ async def generate_simplified_summary(abstract, introduction, materials_methods,
         3. What they found
         4. Why it matters
         
-        Use simple language and avoid technical jargon. Keep it under 300 words.
+        Use simple language and avoid technical jargon. Keep it under 300 words. Start directly with the subject.
         """
         
         # Generate content using AI
