@@ -180,7 +180,8 @@ async def generate_simplified_summary(abstract, introduction, materials_methods,
     
     try:
         # Combine all sections
-        combined_text = f"Abstract: {abstract}\n\nIntroduction: {introduction}\n\nMaterials and Methods: {materials_methods}\n\nResults: {results}\n\nDiscussion: {discussion}"
+        combined_text = f"Abstract: {abstract}\n\nMaterials and Methods: {materials_methods}\n\nResults: {results}"
+        # combined_text = f"Abstract: {abstract}\n\nIntroduction: {introduction}\n\nMaterials and Methods: {materials_methods}\n\nResults: {results}\n\nDiscussion: {discussion}"
         
         # Truncate if too long
         if len(combined_text) > 3000:
