@@ -66,13 +66,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _clearSearch() {
-    setState(() {
-      searchController.clear();
-      filteredPapers = papers;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,13 +90,14 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(width: 12),
-            // Astro Rush text with readable styling
+            // Astro Rush text with futuristic styling
             Text(
               'ASTRO',
               style: GoogleFonts.orbitron(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF9C27B0), // Purple
+                letterSpacing: 1.5,
               ),
             ),
             Text(
@@ -112,6 +106,7 @@ class _HomePageState extends State<HomePage> {
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF009688), // Teal
+                letterSpacing: 1.5,
               ),
             ),
           ],
@@ -300,70 +295,6 @@ class _HomePageState extends State<HomePage> {
               );
             },
           ),
-        );
-      },
-    );
-  }
-
-  void _showPaperDetails(ResearchPaper paper) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(paper.title),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(paper.summary, style: const TextStyle(fontSize: 14)),
-                const SizedBox(height: 16),
-                const Text(
-                  'Keywords:',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 4.0,
-                  children: paper.keywords
-                      .map(
-                        (keyword) => Chip(
-                          label: Text(keyword),
-                          backgroundColor: Colors.blue.withOpacity(0.1),
-                        ),
-                      )
-                      .toList(),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Link:',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                const SizedBox(height: 4),
-                GestureDetector(
-                  onTap: () {
-                    // Here you could open the link in a browser
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Link: ${paper.link}')),
-                    );
-                  },
-                  child: Text(
-                    paper.link,
-                    style: const TextStyle(
-                      color: Colors.blue,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-          ],
         );
       },
     );

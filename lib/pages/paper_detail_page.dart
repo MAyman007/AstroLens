@@ -147,9 +147,12 @@ class _PaperDetailPageState extends State<PaperDetailPage> {
   }
 
   Widget _buildContent() {
+    // Only show content if API data is available
+    if (_apiPaper == null) return const SizedBox.shrink();
+
     final content = _showFullArticle
-        ? _currentPaper.fullArticle
-        : _currentPaper.simplifiedAiVersion;
+        ? _apiPaper!.fullArticle
+        : _apiPaper!.simplifiedAiVersion;
     final title = _showFullArticle ? 'Full Article' : 'AI Summary';
 
     return Container(
@@ -193,20 +196,7 @@ class _PaperDetailPageState extends State<PaperDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Paper Details'),
-        actions: [
-          if (_isLoading)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Paper Details')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -218,6 +208,17 @@ class _PaperDetailPageState extends State<PaperDetailPage> {
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Original Summary as Subtitle
+            Text(
+              widget.paper.summary,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                fontStyle: FontStyle.italic,
+                height: 1.4,
               ),
             ),
             const SizedBox(height: 24),
@@ -291,44 +292,6 @@ class _PaperDetailPageState extends State<PaperDetailPage> {
                     borderRadius: BorderRadius.circular(8.0),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Paper Link Display
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.tertiary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6.0),
-                border: Border.all(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.tertiary.withOpacity(0.3),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Source:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.paper.link,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontSize: 12,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ],
               ),
             ),
           ],

@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/services.dart';
-import '../../lib/services/paper_service.dart';
-import '../../lib/models/research_paper.dart';
+import 'package:astrolens/services/paper_service.dart';
+import 'package:astrolens/models/research_paper.dart';
 
 void main() {
   group('PaperService', () {
