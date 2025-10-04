@@ -193,10 +193,46 @@ class _PaperDetailPageState extends State<PaperDetailPage> {
     );
   }
 
+  Future<void> _launchGitHub() async {
+    final Uri url = Uri.parse('https://github.com/MAyman007/AstroLens');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open GitHub repository'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Paper Details')),
+      appBar: AppBar(
+        title: const Text('Paper Details'),
+        actions: [
+          // Open Source GitHub Link
+          TextButton.icon(
+            onPressed: _launchGitHub,
+            icon: const Icon(
+              Icons.code,
+              color: Color(0xFF00BFA5), // Emerald Teal
+              size: 18,
+            ),
+            label: const Text(
+              'View Source on GitHub',
+              style: TextStyle(
+                color: Color(0xFF00BFA5), // Emerald Teal
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

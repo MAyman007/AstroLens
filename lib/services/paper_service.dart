@@ -66,7 +66,7 @@ class PaperService {
             );
 
         print('DEBUG: API Response Status: ${response.statusCode}');
-        print('DEBUG: API Response Body: ${response.body}');
+        // print('DEBUG: API Response Body: ${response.body}');
 
         if (response.statusCode == 200) {
           // Parse the JSON response

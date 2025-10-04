@@ -286,6 +286,25 @@ class _ChatPageState extends State<ChatPage> {
       appBar: AppBar(
         title: const Text('Research Assistant'),
         backgroundColor: Theme.of(context).colorScheme.surface,
+        actions: [
+          // Open Source GitHub Link
+          TextButton.icon(
+            onPressed: () =>
+                _launchUrl('https://github.com/MAyman007/AstroLens'),
+            icon: const Icon(
+              Icons.code,
+              color: Color(0xFF00BFA5), // Emerald Teal
+              size: 18,
+            ),
+            label: const Text(
+              'View Source on GitHub',
+              style: TextStyle(
+                color: Color(0xFF00BFA5), // Emerald Teal
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
