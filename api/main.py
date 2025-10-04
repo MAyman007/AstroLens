@@ -40,10 +40,11 @@ app = FastAPI(
 # Add CORS middleware to allow requests from Flutter app
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your Flutter app's domain
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=["*"],  # Allow all origins for now
+    allow_credentials=False,  # Set to False when using wildcard
+    allow_methods=["GET", "POST", "OPTIONS", "HEAD"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 # Request model
@@ -585,6 +586,11 @@ async def summarize_paper_get(url: str):
 async def favicon():
     """Favicon endpoint to prevent 404 errors."""
     return {"message": "No favicon"}
+
+@app.options("/summarize-get")
+async def summarize_options():
+    """Handle preflight OPTIONS request for CORS."""
+    return {}
 
 @app.get("/health")
 async def health_check():
