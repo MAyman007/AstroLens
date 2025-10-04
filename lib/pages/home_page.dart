@@ -20,6 +20,8 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = true;
   String? errorMessage;
   final TextEditingController searchController = TextEditingController();
+  int _currentPage = 0;
+  final int _papersPerPage = 30;
 
   @override
   void initState() {
@@ -49,6 +51,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  int get _currentStartIndex => _currentPage * _papersPerPage;
+
+  int get _currentEndIndex =>
+      (_currentPage + 1) * _papersPerPage < filteredPapers.length
+      ? (_currentPage + 1) * _papersPerPage
+      : filteredPapers.length;
+
   void _onSearchChanged(String query) {
     setState(() {
       if (query.isEmpty) {
@@ -67,6 +76,7 @@ class _HomePageState extends State<HomePage> {
             .toList();
       }
     });
+    _currentPage = 0; // Reset to first page on new search
   }
 
   Future<void> _launchGitHub() async {
@@ -175,14 +185,25 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-          // Additional futuristic element
-          Container(
-            margin: const EdgeInsets.only(right: 16.0),
-            child: const Icon(
-              Icons.science,
-              color: Color(0xFF7C4DFF), // Electric Purple
+          TextButton.icon(
+            onPressed: _launchGitHub,
+            icon: const Icon(Icons.code, color: Color(0xFF00BFA5)),
+            label: const Text(
+              'Source Code',
+              style: TextStyle(
+                color: Color(0xFF00BFA5),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
+          // Additional futuristic element
+          // Container(
+          //   margin: const EdgeInsets.only(right: 16.0),
+          //   child: const Icon(
+          //     Icons.science,
+          //     color: Color(0xFF7C4DFF), // Electric Purple
+          //   ),
+          // ),
         ],
       ),
       body: Column(
@@ -252,36 +273,50 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 8),
           // Content Area
           Expanded(child: _buildContent()),
-          // Footer with View Source link
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Center(
-              child: TextButton.icon(
-                onPressed: _launchGitHub,
-                icon: const Icon(Icons.code, color: Color(0xFF00BFA5)),
-                label: const Text(
-                  'View Source on GitHub',
-                  style: TextStyle(
-                    color: Color(0xFF00BFA5),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _currentPage > 0
+                    ? () {
+                        setState(() {
+                          _currentPage--;
+                        });
+                      }
+                    : null,
               ),
-            ),
+              Text(
+                'Page ${_currentPage + 1} of ${((filteredPapers.length + _papersPerPage - 1) / _papersPerPage).floor()}',
+              ),
+              IconButton(
+                icon: const Icon(Icons.arrow_forward),
+                onPressed: _currentEndIndex < filteredPapers.length
+                    ? () {
+                        setState(() {
+                          _currentPage++;
+                        });
+                      }
+                    : null,
+              ),
+            ],
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (context) => const ChatPage()));
-        },
-        backgroundColor: Theme.of(context).colorScheme.secondary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.chat_bubble_outline),
-        label: const Text('Ask Assistant'),
-        elevation: 8,
+      floatingActionButton: Padding(
+        padding: EdgeInsetsGeometry.fromLTRB(0, 0, 0, 30),
+        child: FloatingActionButton.extended(
+          onPressed: () {
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (context) => const ChatPage()));
+          },
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.chat_bubble_outline),
+          label: const Text('Ask Assistant'),
+          elevation: 8,
+        ),
       ),
     );
   }
@@ -336,10 +371,10 @@ class _HomePageState extends State<HomePage> {
     }
 
     return ListView.builder(
-      itemCount: filteredPapers.length,
+      itemCount: _currentEndIndex - _currentStartIndex,
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       itemBuilder: (context, index) {
-        final paper = filteredPapers[index];
+        final paper = filteredPapers[index + _currentStartIndex];
         return Card(
           margin: const EdgeInsets.only(bottom: 12.0),
           elevation: 2,
