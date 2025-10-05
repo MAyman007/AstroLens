@@ -335,7 +335,7 @@ class _PaperDetailPageState extends State<PaperDetailPage> {
                   onPressed: _launchGitHub,
                   icon: const Icon(Icons.code, color: Color(0xFF00BFA5)),
                   label: const Text(
-                    'View Source on GitHub',
+                    'Source Code',
                     style: TextStyle(
                       color: Color(0xFF00BFA5),
                       fontWeight: FontWeight.w600,
