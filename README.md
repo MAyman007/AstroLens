@@ -32,7 +32,7 @@ AstroLens is a modern Flutter application that makes space biology research acce
 - **Chat Endpoint** - Intelligent query processing with paper matching
 - **CORS Enabled** - Ready for web application integration
 - **Auto-generated Documentation** - Interactive API docs at `/docs`
-
+<!-- 
 ---
 
 ## 🎨 Design & Theme
@@ -43,7 +43,7 @@ AstroLens features a modern space-inspired design:
 - **Secondary**: Electric Purple (#7C4DFF) - Modern purple accent
 - **Tertiary**: Emerald Teal (#00BFA5) - Sophisticated teal
 - **Background**: Midnight Black (#0F1419) - Deep space background
-- **Typography**: Inter and Orbitron fonts for modern, readable text
+- **Typography**: Inter and Orbitron fonts for modern, readable text -->
 
 ---
 
@@ -153,7 +153,7 @@ The app uses the deployed API by default, but you can run it locally:
 
 ## 📊 Research Paper Database
 
-The app includes 5 curated research papers covering:
+The app includes 608 curated research papers covering a wide range of space biology topics, for example:
 
 1. **Animal Studies** - Mouse experiments in space missions
 2. **Bone Health** - Microgravity effects on bone density and cellular processes
@@ -199,10 +199,8 @@ GET /health
 ## 📱 Supported Platforms
 
 - ✅ **Android** - Native mobile experience
-- ✅ **iOS** - Native mobile experience  
 - ✅ **Web** - Responsive web application
 - ✅ **Windows** - Desktop application
-- ✅ **macOS** - Desktop application
 - ✅ **Linux** - Desktop application
 
 ---
@@ -221,6 +219,17 @@ flutter test test/services/paper_service_test.dart
 ---
 
 ## 🚀 Deployment
+
+### Releases
+Platform-specific builds (mobile and desktop) are provided on the project's GitHub Releases page. Look for the latest release to download:
+- Mobile
+  - Android: APK / AAB packages
+- Desktop
+  - Windows: MSI / EXE build
+  - Linux: AppImage / DEB / RPM (when provided)
+
+Visit the Releases page for binaries and installation instructions:
+https://github.com/MAyman007/AstroLens/releases
 
 ### Web Deployment
 The app is deployed at [astrolens.pages.web](https://astrolens.pages.web) using Flutter Web.
@@ -263,13 +272,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Flutter** team for the amazing cross-platform framework
 - **FastAPI** for the modern Python web framework
 
----
+<!-- ---
 
 ## 📧 Contact
 
 **Mohamed Ayman** - [GitHub](https://github.com/MAyman007)
 
-**Project Link**: [https://github.com/MAyman007/AstroLens](https://github.com/MAyman007/AstroLens)
+**Project Link**: [https://github.com/MAyman007/AstroLens](https://github.com/MAyman007/AstroLens) -->
 
 <!-- ---
 
