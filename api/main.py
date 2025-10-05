@@ -736,11 +736,47 @@ async def summarize_options():
     return {}
 
 def load_papers() -> List[Dict[str, Any]]:
-    """Load papers from local JSON file."""
+    """Load papers from local JSON file.
+
+    Supports two formats:
+    - Legacy: a top-level list of paper objects.
+    - Categorized: a top-level dict where each key is a category and the value is a list of paper objects.
+
+    The function flattens either structure into a single List[Dict[str, Any]] so the API
+    can work with papers regardless of categories. If a paper item does not include a
+    'category' field, the loader will set it from the surrounding category (helpful for
+    downstream debugging), but the rest of the API will ignore categories.
+    """
     try:
         papers_path = os.path.join(os.path.dirname(__file__), "../assets/papers.json")
-        with open(papers_path, 'r', encoding='utf-8') as file:
-            papers = json.load(file)
+        with open(papers_path, "r", encoding="utf-8") as file:
+            data = json.load(file)
+
+        papers: List[Dict[str, Any]] = []
+
+        # Legacy format: top-level list of paper objects
+        if isinstance(data, list):
+            for item in data:
+                if isinstance(item, dict):
+                    papers.append(item)
+
+        # Categorized format: top-level dict mapping category -> list of papers
+        elif isinstance(data, dict):
+            for category, items in data.items():
+                if not isinstance(items, list):
+                    continue
+                for item in items:
+                    if isinstance(item, dict):
+                        # Preserve category on the item if not present; API will not depend on it.
+                        if "category" not in item:
+                            try:
+                                item["category"] = str(category)
+                            except Exception:
+                                pass
+                        papers.append(item)
+        else:
+            print("Warning: Unexpected papers.json structure — expected list or dict")
+
         return papers
     except FileNotFoundError:
         print("Warning: papers.json file not found")

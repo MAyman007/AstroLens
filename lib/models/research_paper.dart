@@ -9,6 +9,8 @@ class ResearchPaper {
   final String discussion;
   final String simplifiedAiVersion;
   final List<String> keywords; // Keep for backward compatibility
+  final String?
+  category; // Optional category assigned when loading categorized JSON
 
   ResearchPaper({
     this.id,
@@ -21,6 +23,7 @@ class ResearchPaper {
     required this.discussion,
     required this.simplifiedAiVersion,
     this.keywords = const [],
+    this.category,
   });
 
   // Factory constructor to create ResearchPaper from API JSON response
@@ -34,10 +37,15 @@ class ResearchPaper {
       results: json['results'] as String? ?? '',
       discussion: json['discussion'] as String? ?? '',
       simplifiedAiVersion: json['simplified_ai_version'] as String? ?? '',
+      keywords: json['keywords'] != null
+          ? List<String>.from(json['keywords'] as List)
+          : [],
+      category: json['category'] as String?,
     );
   }
 
   // Factory constructor to create ResearchPaper from legacy JSON (with id)
+  /// fromJson supports an optional category field passed in the JSON under 'category'.
   factory ResearchPaper.fromJson(Map<String, dynamic> json) {
     return ResearchPaper(
       id: json['id'] as int?,
@@ -54,6 +62,7 @@ class ResearchPaper {
       keywords: json['keywords'] != null
           ? List<String>.from(json['keywords'] as List)
           : [],
+      category: json['category'] as String?,
     );
   }
 
@@ -87,6 +96,7 @@ class ResearchPaper {
   Map<String, dynamic> toJson() {
     return {
       if (id != null) 'id': id,
+      if (category != null) 'category': category,
       'title': title,
       'link': link,
       'abstract': abstract,
@@ -132,6 +142,7 @@ class ResearchPaper {
         materialsMethods.hashCode ^
         results.hashCode ^
         discussion.hashCode ^
-        simplifiedAiVersion.hashCode;
+        simplifiedAiVersion.hashCode ^
+        (category?.hashCode ?? 0);
   }
 }

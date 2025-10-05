@@ -17,6 +17,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<ResearchPaper> papers = [];
   List<ResearchPaper> filteredPapers = [];
+  Map<String, List<ResearchPaper>> categorizedPapers = {};
   bool isLoading = true;
   String? errorMessage;
   final TextEditingController searchController = TextEditingController();
@@ -38,9 +39,21 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadPapers() async {
     try {
       final loadedPapers = await PaperService.loadPapers();
+
+      // Build categorized map from loaded papers (category may be null)
+      final Map<String, List<ResearchPaper>> map = {};
+      for (final p in loadedPapers) {
+        final key = (p.category != null && p.category!.trim().isNotEmpty)
+            ? p.category!
+            : 'Uncategorized / Misc';
+        map.putIfAbsent(key, () => []).add(p);
+      }
+
       setState(() {
         papers = loadedPapers;
-        filteredPapers = loadedPapers; // Show all papers initially
+        filteredPapers =
+            loadedPapers; // Show all papers initially (used for search)
+        categorizedPapers = map;
         isLoading = false;
       });
     } catch (e) {
@@ -273,34 +286,35 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 8),
           // Content Area
           Expanded(child: _buildContent()),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _currentPage > 0
-                    ? () {
-                        setState(() {
-                          _currentPage--;
-                        });
-                      }
-                    : null,
-              ),
-              Text(
-                'Page ${_currentPage + 1} of ${((filteredPapers.length + _papersPerPage - 1) / _papersPerPage).floor()}',
-              ),
-              IconButton(
-                icon: const Icon(Icons.arrow_forward),
-                onPressed: _currentEndIndex < filteredPapers.length
-                    ? () {
-                        setState(() {
-                          _currentPage++;
-                        });
-                      }
-                    : null,
-              ),
-            ],
-          ),
+          if (searchController.text.isNotEmpty)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: _currentPage > 0
+                      ? () {
+                          setState(() {
+                            _currentPage--;
+                          });
+                        }
+                      : null,
+                ),
+                Text(
+                  'Page ${_currentPage + 1} of ${((filteredPapers.length + _papersPerPage - 1) / _papersPerPage).floor()}',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.arrow_forward),
+                  onPressed: _currentEndIndex < filteredPapers.length
+                      ? () {
+                          setState(() {
+                            _currentPage++;
+                          });
+                        }
+                      : null,
+                ),
+              ],
+            ),
         ],
       ),
       floatingActionButton: Padding(
@@ -351,6 +365,87 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
+      );
+    }
+
+    // If no active search query, render the categorized view
+    if (searchController.text.isEmpty && categorizedPapers.isNotEmpty) {
+      final categories = categorizedPapers.keys.toList()
+        ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+      if (categories.isEmpty) {
+        return const Center(
+          child: Text(
+            'No categories available',
+            style: TextStyle(color: Colors.grey),
+          ),
+        );
+      }
+
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        itemCount: categories.length,
+        itemBuilder: (context, idx) {
+          final category = categories[idx];
+          final list = categorizedPapers[category] ?? [];
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Card(
+              elevation: 2,
+              child: ExpansionTile(
+                initiallyExpanded: false,
+                tilePadding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                title: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        category,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${list.length}',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+                children: list.map((paper) {
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
+                    title: Text(
+                      paper.title,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      paper.summary,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => PaperDetailPage(paper: paper),
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
+              ),
+            ),
+          );
+        },
       );
     }
 

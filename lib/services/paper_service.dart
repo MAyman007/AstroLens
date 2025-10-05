@@ -17,18 +17,47 @@ class PaperService {
       // Decode the JSON string into a dynamic object
       final dynamic jsonData = jsonDecode(jsonString);
 
-      // Ensure the JSON data is a List
-      if (jsonData is! List) {
-        throw Exception('Expected JSON to contain a list of papers');
-      }
+      final List<ResearchPaper> papers = [];
 
-      // Convert each JSON object to a ResearchPaper instance
-      final List<ResearchPaper> papers = jsonData
-          .map(
-            (jsonPaper) =>
-                ResearchPaper.fromJson(jsonPaper as Map<String, dynamic>),
-          )
-          .toList();
+      // If JSON is a plain list (legacy format), parse each entry
+      if (jsonData is List) {
+        for (final item in jsonData) {
+          if (item is Map<String, dynamic>) {
+            papers.add(ResearchPaper.fromJson(item));
+          }
+        }
+      }
+      // If JSON is a map of categories -> list of papers, iterate categories
+      else if (jsonData is Map<String, dynamic>) {
+        jsonData.forEach((category, value) {
+          if (value is List) {
+            for (final item in value) {
+              if (item is Map<String, dynamic>) {
+                // Build ResearchPaper from the legacy fields and attach category
+                papers.add(
+                  ResearchPaper(
+                    id: item['id'] as int?,
+                    title: item['title'] as String? ?? '',
+                    link: item['link'] as String? ?? '',
+                    abstract: item['summary'] as String? ?? '',
+                    introduction: '',
+                    materialsMethods: '',
+                    results: '',
+                    discussion: '',
+                    simplifiedAiVersion: item['summary'] as String? ?? '',
+                    keywords: item['keywords'] != null
+                        ? List<String>.from(item['keywords'] as List)
+                        : [],
+                    category: category,
+                  ),
+                );
+              }
+            }
+          }
+        });
+      } else {
+        throw Exception('Unsupported JSON structure for papers');
+      }
 
       return papers;
     } catch (e) {
@@ -98,28 +127,6 @@ class PaperService {
 /// Standalone function for loading papers (alternative approach)
 /// This can be used if you prefer a simple function over a class method
 Future<List<ResearchPaper>> loadPapers() async {
-  try {
-    // Load the JSON string from assets
-    final String jsonString = await rootBundle.loadString('assets/papers.json');
-
-    // Decode the JSON string into a dynamic object
-    final dynamic jsonData = jsonDecode(jsonString);
-
-    // Ensure the JSON data is a List
-    if (jsonData is! List) {
-      throw Exception('Expected JSON to contain a list of papers');
-    }
-
-    // Convert each JSON object to a ResearchPaper instance
-    final List<ResearchPaper> papers = jsonData
-        .map(
-          (jsonPaper) =>
-              ResearchPaper.fromJson(jsonPaper as Map<String, dynamic>),
-        )
-        .toList();
-
-    return papers;
-  } catch (e) {
-    throw Exception('Failed to load papers: $e');
-  }
+  // Delegate to PaperService.loadPapers to handle both list and categorized map formats.
+  return await PaperService.loadPapers();
 }
