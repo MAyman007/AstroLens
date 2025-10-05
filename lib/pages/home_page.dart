@@ -18,15 +18,57 @@ class _HomePageState extends State<HomePage> {
   List<ResearchPaper> papers = [];
   List<ResearchPaper> filteredPapers = [];
   Map<String, List<ResearchPaper>> categorizedPapers = {};
+  // Keyword filtering state
+  Map<String, int> keywordCounts = {};
+  List<String> popularKeywords = [];
+  final Set<String> selectedKeywords = {};
+  // Precomputed top keywords provided by user (counts and percentage)
+  // This will be merged with counts computed from the loaded papers.
+  final Map<String, Map<String, dynamic>> precomputedTopKeywords = {
+    "space": {"count": 157, "percentage": 4.31},
+    "spaceflight": {"count": 98, "percentage": 2.69},
+    "cell": {"count": 68, "percentage": 1.87},
+    "gene": {"count": 56, "percentage": 1.54},
+    "international": {"count": 50, "percentage": 1.37},
+    "station": {"count": 50, "percentage": 1.37},
+    "mice": {"count": 48, "percentage": 1.32},
+    "bone": {"count": 46, "percentage": 1.26},
+    "response": {"count": 45, "percentage": 1.24},
+    "muscle": {"count": 44, "percentage": 1.21},
+    "human": {"count": 36, "percentage": 0.99},
+    "expression": {"count": 35, "percentage": 0.96},
+    "microgravity": {"count": 33, "percentage": 0.91},
+    "arabidopsis": {"count": 32, "percentage": 0.88},
+    "effects": {"count": 31, "percentage": 0.85},
+    "plant": {"count": 30, "percentage": 0.82},
+    "analysis": {"count": 29, "percentage": 0.80},
+    "cells": {"count": 27, "percentage": 0.74},
+    "radiation": {"count": 27, "percentage": 0.74},
+    "mouse": {"count": 26, "percentage": 0.71},
+    "skeletal": {"count": 25, "percentage": 0.69},
+    "simulated": {"count": 24, "percentage": 0.66},
+    "isolated": {"count": 24, "percentage": 0.66},
+    "growth": {"count": 23, "percentage": 0.63},
+    "changes": {"count": 22, "percentage": 0.60},
+    "characterization": {"count": 21, "percentage": 0.58},
+    "genome": {"count": 21, "percentage": 0.58},
+    "protein": {"count": 20, "percentage": 0.55},
+    "stress": {"count": 18, "percentage": 0.49},
+    "thaliana": {"count": 16, "percentage": 0.44},
+  };
+  // Total occurrences from user's stats (used to compute percentages)
+  final int totalKeywordOccurrences = 3642;
   bool isLoading = true;
   String? errorMessage;
   final TextEditingController searchController = TextEditingController();
+  bool showKeywordRow = false;
   int _currentPage = 0;
   final int _papersPerPage = 30;
 
   @override
   void initState() {
     super.initState();
+    // Keyword row will only be shown when the search icon is explicitly tapped.
     _loadPapers();
   }
 
@@ -49,11 +91,40 @@ class _HomePageState extends State<HomePage> {
         map.putIfAbsent(key, () => []).add(p);
       }
 
+      // Build keyword counts and popular keywords (top 30)
+      final Map<String, int> kcounts = {};
+      for (final p in loadedPapers) {
+        for (final kw in p.keywords) {
+          final k = kw.toLowerCase().trim();
+          if (k.isEmpty) continue;
+          kcounts[k] = (kcounts[k] ?? 0) + 1;
+        }
+      }
+
+      // Merge precomputed top keywords (provided externally). This ensures
+      // the top keyword list reflects the user's supplied stats while still
+      // counting any other keywords present in the loaded papers.
+      precomputedTopKeywords.forEach((k, v) {
+        try {
+          final providedCount = (v['count'] as num).toInt();
+          kcounts[k] = providedCount;
+        } catch (_) {
+          // ignore malformed entries
+        }
+      });
+
+      final popular = kcounts.keys.toList()
+        ..sort((a, b) => kcounts[b]!.compareTo(kcounts[a]!));
+      final topKeywords = popular.take(30).toList();
+
       setState(() {
         papers = loadedPapers;
         filteredPapers =
             loadedPapers; // Show all papers initially (used for search)
         categorizedPapers = map;
+        keywordCounts = kcounts;
+        popularKeywords = topKeywords;
+        selectedKeywords.clear();
         isLoading = false;
       });
     } catch (e) {
@@ -72,24 +143,59 @@ class _HomePageState extends State<HomePage> {
       : filteredPapers.length;
 
   void _onSearchChanged(String query) {
+    _applyFilters(query);
+    _currentPage = 0; // Reset to first page on new search
+  }
+
+  void _toggleKeyword(String keyword) {
+    final k = keyword.toLowerCase();
+    final wasSelected = selectedKeywords.contains(k);
     setState(() {
-      if (query.isEmpty) {
-        filteredPapers = papers;
+      if (wasSelected) {
+        selectedKeywords.remove(k);
       } else {
-        final searchQuery = query.toLowerCase().trim();
-        filteredPapers = papers
-            .where(
-              (paper) =>
-                  paper.title.toLowerCase().contains(searchQuery) ||
-                  paper.summary.toLowerCase().contains(searchQuery) ||
-                  paper.keywords.any(
-                    (keyword) => keyword.toLowerCase().contains(searchQuery),
-                  ),
-            )
-            .toList();
+        selectedKeywords.add(k);
+      }
+
+      // If user just selected a keyword and the search field is empty,
+      // populate the search field with that keyword for clarity.
+      if (!wasSelected && searchController.text.trim().isEmpty) {
+        searchController.text = k;
+      }
+
+      // If user just deselected the last keyword and the search field
+      // exactly matched that keyword, clear the search field.
+      if (wasSelected &&
+          selectedKeywords.isEmpty &&
+          searchController.text.trim().toLowerCase() == k) {
+        searchController.clear();
       }
     });
-    _currentPage = 0; // Reset to first page on new search
+
+    _applyFilters(searchController.text);
+  }
+
+  void _applyFilters(String query) {
+    final q = query.toLowerCase().trim();
+    setState(() {
+      filteredPapers = papers.where((paper) {
+        final title = paper.title.toLowerCase();
+        final summary = paper.summary.toLowerCase();
+        final kws = paper.keywords.map((k) => k.toLowerCase()).toList();
+
+        final matchesSearch =
+            q.isEmpty ||
+            title.contains(q) ||
+            summary.contains(q) ||
+            kws.any((keyword) => keyword.contains(q));
+
+        final matchesKeywords =
+            selectedKeywords.isEmpty ||
+            selectedKeywords.every((sel) => kws.contains(sel));
+
+        return matchesSearch && matchesKeywords;
+      }).toList();
+    });
   }
 
   Future<void> _launchGitHub() async {
@@ -198,74 +304,154 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-          TextButton.icon(
-            onPressed: _launchGitHub,
-            icon: const Icon(Icons.code, color: Color(0xFF00BFA5)),
-            label: const Text(
-              'Source Code',
-              style: TextStyle(
-                color: Color(0xFF00BFA5),
-                fontWeight: FontWeight.w600,
-              ),
+          // Additional futuristic element
+          Container(
+            margin: const EdgeInsets.only(right: 16.0),
+            child: const Icon(
+              Icons.science,
+              color: Color(0xFF7C4DFF), // Electric Purple
             ),
           ),
-          // Additional futuristic element
-          // Container(
-          //   margin: const EdgeInsets.only(right: 16.0),
-          //   child: const Icon(
-          //     Icons.science,
-          //     color: Color(0xFF7C4DFF), // Electric Purple
-          //   ),
-          // ),
         ],
       ),
       body: Column(
         children: [
-          // Search Bar
+          // Search Bar with explicit filter icon at the end (always visible)
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: searchController,
-              onChanged: _onSearchChanged,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Search papers...',
-                hintStyle: const TextStyle(color: Colors.white54),
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF00D4FF)),
-                suffixIcon: searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, color: Color(0xFF00BFA5)),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: searchController,
+                    onChanged: _onSearchChanged,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Search papers...',
+                      hintStyle: const TextStyle(color: Colors.white54),
+                      prefixIcon: IconButton(
+                        icon: const Icon(
+                          Icons.search,
+                          color: Color(0xFF00D4FF),
+                        ),
                         onPressed: () {
-                          searchController.clear();
-                          _onSearchChanged('');
+                          setState(() {
+                            showKeywordRow = true;
+                          });
+                          FocusScope.of(context).requestFocus(FocusNode());
                         },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                  borderSide: const BorderSide(color: Color(0xFF3D4354)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF3D4354),
-                    width: 1.5,
+                      ),
+                      // Keep clear icon when text exists
+                      suffixIcon: searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(
+                                Icons.clear,
+                                color: Color(0xFF00BFA5),
+                              ),
+                              onPressed: () {
+                                searchController.clear();
+                                _onSearchChanged('');
+                              },
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        borderSide: const BorderSide(color: Color(0xFF3D4354)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF3D4354),
+                          width: 1.5,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF00D4FF),
+                          width: 2.0,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFF242938),
+                    ),
                   ),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF00D4FF),
-                    width: 2.0,
-                  ),
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: 'Filters',
+                  icon: const Icon(Icons.filter_list, color: Color(0xFF00D4FF)),
+                  onPressed: () {
+                    setState(() {
+                      showKeywordRow = !showKeywordRow;
+                    });
+                  },
                 ),
-                filled: true,
-                fillColor: const Color(0xFF242938),
-              ),
+              ],
             ),
           ),
-          // Search Results Info
-          if (searchController.text.isNotEmpty && !isLoading)
+          // Search Results Info + Keyword filters
+          if (showKeywordRow && !isLoading && popularKeywords.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 6.0,
+              ),
+              child: SizedBox(
+                height: 44,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: popularKeywords.map((kw) {
+                      final count = keywordCounts[kw] ?? 0;
+                      final selected = selectedKeywords.contains(kw);
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: FilterChip(
+                          label: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                kw,
+                                style: TextStyle(
+                                  color: selected
+                                      ? Colors.white
+                                      : Colors.grey[300],
+                                  fontSize: 13,
+                                ),
+                              ),
+                              Text(
+                                '${count}',
+                                style: TextStyle(
+                                  color: selected
+                                      ? Colors.white70
+                                      : Colors.grey[400],
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                          selected: selected,
+                          onSelected: (_) => _toggleKeyword(kw),
+                          selectedColor: const Color(
+                            0xFF7C4DFF,
+                          ).withOpacity(0.18),
+                          backgroundColor: const Color(0xFF3A3C49),
+                          labelStyle: TextStyle(
+                            color: selected ? Colors.white : Colors.grey[300],
+                            fontSize: 13,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ),
+          if ((searchController.text.isNotEmpty ||
+                  selectedKeywords.isNotEmpty) &&
+              !isLoading)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
@@ -282,11 +468,11 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-          if (searchController.text.isNotEmpty && !isLoading)
+          if (searchController.text.isNotEmpty || selectedKeywords.isNotEmpty)
             const SizedBox(height: 8),
           // Content Area
           Expanded(child: _buildContent()),
-          if (searchController.text.isNotEmpty)
+          if (searchController.text.isNotEmpty || selectedKeywords.isNotEmpty)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -314,6 +500,21 @@ class _HomePageState extends State<HomePage> {
                       : null,
                 ),
               ],
+            ),
+          if (searchController.text.isEmpty && selectedKeywords.isEmpty)
+            Padding(
+              padding: EdgeInsetsGeometry.all(5),
+              child: TextButton.icon(
+                onPressed: _launchGitHub,
+                icon: const Icon(Icons.code, color: Color(0xFF00BFA5)),
+                label: const Text(
+                  'Source Code',
+                  style: TextStyle(
+                    color: Color(0xFF00BFA5),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ),
         ],
       ),
@@ -395,26 +596,30 @@ class _HomePageState extends State<HomePage> {
               elevation: 2,
               child: ExpansionTile(
                 initiallyExpanded: false,
-                tilePadding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
+                leading: CircleAvatar(
+                  backgroundColor: Colors.deepPurpleAccent.withOpacity(0.12),
+                  child: Text(
+                    category.isNotEmpty ? category[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                      color: Colors.deepPurpleAccent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                title: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        category,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '${list.length}',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ],
+                tilePadding: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 6.0,
+                ),
+                title: Text(
+                  category,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                subtitle: Text(
+                  '${list.length} paper${list.length == 1 ? '' : 's'}',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
                 children: list.map((paper) {
                   return ListTile(
