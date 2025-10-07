@@ -6,7 +6,7 @@ AstroLens is a modern Flutter application that makes space biology research acce
 
 ## 🌐 Live Demo
 
-**Web App**: [astrolens.pages.web](https://astrolens.pages.web)  
+**Web App**: [astrolens.pages.dev](https://astrolens.pages.dev)  
 **API Documentation**: [astrolens.mohamedayman.org](https://astrolens.mohamedayman.org)
 
 ---
@@ -232,7 +232,7 @@ Visit the Releases page for binaries and installation instructions:
 https://github.com/MAyman007/AstroLens/releases
 
 ### Web Deployment
-The app is deployed at [astrolens.pages.web](https://astrolens.pages.web) using Flutter Web.
+The app is deployed at [astrolens.pages.dev](https://astrolens.pages.dev) using Flutter Web.
 
 ### API Deployment
 The backend API is deployed at [astrolens.mohamedayman.org](https://astrolens.mohamedayman.org) with full CORS support.
