@@ -1,25 +1,27 @@
 # Paper Summarizer API
 
-A FastAPI application that provides endpoints for summarizing research papers from URLs using AI-powered text analysis.
+A FastAPI application that serves as the backend for AstroLens. It provides endpoints for summarizing research papers from URLs, a chat interface for querying a paper database, and caching for performance.
 
 ## Features
 
-- **POST /summarize**: Accepts a URL and returns summarized paper information
-- **GET /**: Root endpoint with API information
+- **AI-Powered Summarization**: Extracts content from research paper URLs (especially PubMed Central) and generates simplified summaries using Google's Generative AI.
+- **Structured Content Extraction**: For PubMed Central (PMC) articles, it uses the NCBI E-utilities API to parse XML and extract distinct sections (Abstract, Introduction, Methods, etc.).
+- **AI Chat Assistant**: A `/chat` endpoint that finds the most relevant paper from a local database based on a user's query and generates a conversational response.
+- **Caching**: In-memory caching for summarization endpoints to improve performance and reduce redundant requests.
 - **GET /health**: Health check endpoint
 - **CORS enabled**: Ready for integration with web applications
 - **Auto-generated documentation**: Available at `/docs` and `/redoc`
 
 ## API Endpoints
 
-### POST /summarize
+### `POST /summarize`
 
 Summarizes a research paper from the provided URL.
 
 **Request Body:**
 ```json
 {
-  "url": "https://example.com/paper.pdf"
+  "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3630201/"
 }
 ```
 
@@ -199,21 +201,6 @@ For production deployment, consider:
 5. **Monitoring**: Add logging and monitoring
 6. **HTTPS**: Use HTTPS in production
 7. **Docker**: Containerize the application
-
-### Example Docker Deployment
-
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-COPY main.py .
-EXPOSE 8000
-
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
 
 ## License
 
